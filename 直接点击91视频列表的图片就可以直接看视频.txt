@@ -1,0 +1,120 @@
+// ==UserScript==
+// @name         直接点击91视频列表的图片就可以直接看视频
+// @namespace    http://92.91p24.space/
+// @version      0.6
+// @description  直接点击91视频列表的图片就可以无限制的看视频
+// @author       匿名
+//
+// @match        http://92.91p24.space/v.php?next=watch
+// @grant        GM_xmlhttpRequest
+// @grant        GM_addStyle
+//
+// ==/UserScript==
+
+(function() {
+    GM_addStyle(`
+		.video-layer{
+			color: #fff;
+			font-size: 16px;
+			position: fixed;
+			width: 600px;
+			height: 380px;
+			background: rgba(60,60,60,0.8);
+            margin: 100px;
+			padding: 65px;
+			top: 10px;
+			left: calc((100% - 800px - 20px)/2)
+		}
+		.video-layer-close{
+			cursor: pointer;
+			padding: 5px;
+			position: absolute;
+			right: 0;
+			top: 0;
+		}
+`);
+    const $videos = document.querySelectorAll('#videobox .imagechannelhd, #videobox .imagechannel');
+    $videos.forEach($video=>{
+        const $a = $video.querySelector('a');
+        const href = $a.href;
+        $a.onclick = ()=>{
+            WatchVideo(href);
+            return false;
+        };
+    });
+    function WatchVideo(url){
+        //getToken(token=>{
+            //if(!token || !token[1]){
+                //alert('无法操作');return;
+            //}
+            //getVideoPage(token[1], url, url=>{
+            getVideoPage('', url, url=>{
+                if(!url || !url[0]){
+                    alert('还没有更新该视频的信息');return;
+                }
+                getVideoUrl(url[0], mp4=>{
+                    if(!url || !url[0]){
+                        alert('无法获取到真实的视频地址');return;
+                    }
+                    showVideoLayer(mp4[0]);
+                });
+            });
+        //});
+    }
+    //获取token
+    function getToken(callback){
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: "http://freeget.vip",
+            onload: function(res) {
+                callback(res.response.match(/token" value="([^"]+)/));
+            }
+        });
+    }
+    //获取视频地址
+    function getVideoPage(token, url, callback){
+        console.log('getVideoPage', token, url);
+    	url = url.replace('view_video.php','view_video_hd.php');
+        GM_xmlhttpRequest({
+            method: "POST",
+            url: "http://freeget.vip/info",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            data: "token=" + token + "&url=" + url,
+            onload: function(res) {
+                callback(res.response.match(/http:\/\/.+?ev.php.[^"]+/));
+            }
+        });
+    }
+    function getVideoUrl(url, cb){
+        console.log('getVideoUrl', url);
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: url,
+            onload: function(res) {
+                cb(res.response.match(/http:\/\/.+?mp4[^"]+/));
+            }
+        });
+    }
+    function showVideoLayer(url){
+        console.log('showVideoLayer', url);
+        const deletes = document.querySelectorAll('.video-layer');
+        deletes.forEach(d=>{d.parent.removeChild(d);});
+        const $layer = document.createElement('div');
+        $layer.className = 'video-layer';
+        $layer.innerHTML = `
+	        <div class="video-layer-close">关闭</div>
+			<video class="video-js vjs-default-skin" controls>
+			<source src="${url}" type="video/mp4">
+			</video>
+            </br></br></br></br>
+			<div>当你看到这个弹出框的时候，代表已经识别出视频文件的网址。</div>
+			<div>遇到无法播放的视频，请尝试使用浏览器打开: <a href='${url}' target='_blank'>视频文件</a></div>
+		`;
+        $layer.querySelector('.video-layer-close').onclick = ()=>{
+            document.body.removeChild($layer);
+        };
+        document.body.appendChild($layer);
+    }
+})();
