@@ -117,4 +117,4 @@
         };
         document.body.appendChild($layer);
     }
-})();
+})(); 
