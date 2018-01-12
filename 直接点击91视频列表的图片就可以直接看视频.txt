@@ -5,7 +5,7 @@
 // @description  直接点击91视频列表的图片就可以无限制的看视频
 // @author       匿名
 //
-// @match        http://92.91p24.space/v.php?next=watch
+// @match        http://92.91p24.space/v.php*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
 //
@@ -23,7 +23,7 @@
             margin: 100px;
 			padding: 65px;
 			top: 10px;
-			left: calc((100% - 800px - 20px)/2)
+			left: calc((100% - 800px - 100px)/2)
 		}
 		.video-layer-close{
 			cursor: pointer;
